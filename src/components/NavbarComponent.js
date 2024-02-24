@@ -1,5 +1,7 @@
 import Link from 'next/link';
 import { Navbar, Nav, Container, Button } from 'react-bootstrap';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faUser, faHandshakeAngle, faQuestion } from '@fortawesome/free-solid-svg-icons';
 
 function NavbarComponent({ loggedIn, user, onLoginClick, onSignupClick, handleLogout }) {
 
@@ -11,16 +13,20 @@ function NavbarComponent({ loggedIn, user, onLoginClick, onSignupClick, handleLo
         TTI Meal Reviewer
         </Navbar.Brand>
     </Link>
+    <Link className="text-white px-3" href="/role-of-azure">
+              Role of Azure <FontAwesomeIcon icon={faQuestion} />
+          </Link>
     <Link className="text-white px-3" href="/credits">
-              Credits
+              Credits <FontAwesomeIcon icon={faHandshakeAngle} />
           </Link>
         <Nav className="ms-auto d-flex">
           {loggedIn ? ( 
             <div className="ms-auto d-flex">
               <span className="text-white mx-2">
                 {user.name}
-              </span>
-              <Button variant="danger" onClick={handleLogout}>Logout</Button>
+                <FontAwesomeIcon icon={faUser} />
+                </span>
+              <Button variant="danger" onClick={handleLogout}>Log Out</Button>
             </div>
           ) : (
             <div className="ms-auto d-flex">
@@ -28,7 +34,7 @@ function NavbarComponent({ loggedIn, user, onLoginClick, onSignupClick, handleLo
                 Sign Up
               </Button>
               <Button variant="primary" onClick={onLoginClick} className="mx-2">
-                Login
+                Log In
               </Button>
             </div>
           )}
