@@ -1,6 +1,6 @@
 'use client'
 
-import styles from './page.module.css';
+
 import Link from 'next/link';
 import { useState, useEffect, useRef } from 'react';
 import axios from '../axios';
@@ -196,9 +196,6 @@ function HomePage() {
 
   return (
     <>
-      {/* <a href="#main" className={styles.skipToContent}>
-        Skip to Main Content
-      </a> */}
       <NavbarComponent
         loggedIn={loggedIn}
         user={user}

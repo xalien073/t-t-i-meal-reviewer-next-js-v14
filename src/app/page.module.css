@@ -1,4 +1,4 @@
-.skip-to-content {
+.skipToContent {
   position: fixed;
   top: -9999px;
   left: -9999px;
@@ -7,21 +7,14 @@
   z-index: 9999;
   text-decoration: none;
   color: #000;
-  font-size: 16px;
   line-height: 1.5;
   border: 1px solid #ccc;
 }
 
-.skip-to-content:focus {
+.skipToContent:focus {
   position: absolute;
   top: 10px;
   left: 10px;
   background-color: #ffe9e9; /* Optional visual cue on focus */
 }
 
-/* Hide the link visually for sighted users */
-@media (min-width: 768px) {
-  .skip-to-content {
-    display: none;
-  }
-}

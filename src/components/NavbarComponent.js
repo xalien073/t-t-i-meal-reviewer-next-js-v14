@@ -1,3 +1,4 @@
+import styles from '../app/page.module.css';
 import Link from 'next/link';
 import { Navbar, Nav, Container, Button } from 'react-bootstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -8,6 +9,9 @@ function NavbarComponent({ loggedIn, user, onLoginClick, onSignupClick, handleLo
   return (
     <Navbar bg="dark" expand="lg">
       <Container>
+      <a href="#main" className={styles.skipToContent}>
+        Skip to Main Content
+      </a>
       <Link href="/">
       <Navbar.Brand className="text-white">
         TTI Meal Reviewer
