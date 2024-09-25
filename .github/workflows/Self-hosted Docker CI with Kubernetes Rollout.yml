@@ -25,15 +25,14 @@ jobs:
           $env:IMAGE_TAG="xalien073/tmr:${{ github.sha }}"
           Write-Host "Building image with tag: $env:IMAGE_TAG"
           docker build . --file Dockerfile --tag $env:IMAGE_TAG
-          docker images
           Write-Host "Pushing image with tag: $env:IMAGE_TAG"
           docker push $env:IMAGE_TAG
           cd C:\Users\stden\OneDrive\Desktop\prototype\Kubernetes\tmr k8s
           Write-Host "Changed directory to tmr k8s"
-          (Get-Content next_deployment.yaml) -replace 'image:.*', "image: $env:IMAGE_TAG" | Set-Content fast_deployment.yaml
+          (Get-Content next_deployment.yaml) -replace 'image:.*', "image: $env:IMAGE_TAG" | Set-Content next_deployment.yaml
         shell: powershell
     
-      - name: Commit and push updated next_deployment.yaml to tmr_api-k8s
+      - name: Commit and push updated next_deployment.yaml to tmr-k8s
         run: |
           cd C:\Users\stden\OneDrive\Desktop\prototype\Kubernetes\tmr k8s
           git config user.name "GitHub Actions"
@@ -50,5 +49,5 @@ jobs:
 
       # - name: Apply the new deployment to Azure Kubernetes Cluster
       #   run: |
-      #     az aks get-credentials --resource-group poona-student --name <CLUSTER_NAME>
+        #     az aks get-credentials --resource-group poona-student --name <CLUSTER_NAME>
       #     
