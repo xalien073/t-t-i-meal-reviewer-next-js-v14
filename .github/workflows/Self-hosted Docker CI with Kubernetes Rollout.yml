@@ -20,21 +20,21 @@ jobs:
           password: ${{ secrets.DOCKER_PASSWORD }}
           timeout: '600'
 
-      - name: Build the Docker image with a unique tag, Push the image to Docker Hub & Update fast_deployment.yaml with the new image tag using PowerShell
+      - name: Build the Docker image with a unique tag, Push the image to Docker Hub & Update next_deployment.yaml with the new image tag using PowerShell
         run: |
           $env:IMAGE_TAG="xalien073/tmr:${{ github.sha }}"
           Write-Host "Building image with tag: $env:IMAGE_TAG"
           docker build . --file Dockerfile --tag $env:IMAGE_TAG
           Write-Host "Pushing image with tag: $env:IMAGE_TAG"
           docker push $env:IMAGE_TAG
-          cd C:\Users\stden\OneDrive\Desktop\prototype\Kubernetes\tmr k8s
-          Write-Host "Changed directory to tmr k8s"
+          cd C:\Users\stden\OneDrive\Desktop\prototype\Kubernetes\tmr-k8s
+          Write-Host "Changed directory to tmr-k8s"
           (Get-Content next_deployment.yaml) -replace 'image:.*', "image: $env:IMAGE_TAG" | Set-Content next_deployment.yaml
         shell: powershell
     
       - name: Commit and push updated next_deployment.yaml to tmr-k8s
         run: |
-          cd C:\Users\stden\OneDrive\Desktop\prototype\Kubernetes\tmr k8s
+          cd C:\Users\stden\OneDrive\Desktop\prototype\Kubernetes\tmr-k8s
           git config user.name "GitHub Actions"
           git config user.email "actions@github.com"
           git add next_deployment.yaml
@@ -43,7 +43,7 @@ jobs:
 
       - name: Apply the new deployment to Minikube
         run: |
-          cd C:\Users\stden\OneDrive\Desktop\prototype\Kubernetes\tmr k8s
+          cd C:\Users\stden\OneDrive\Desktop\prototype\Kubernetes\tmr-k8s
           kubectl apply -f next_deployment.yaml
           kubectl apply -f next_service.yaml
 
