@@ -30,6 +30,9 @@ jobs:
           cd C:\Users\stden\OneDrive\Desktop\prototype\Kubernetes\tmr-k8s
           Write-Host "Changed directory to tmr-k8s"
           (Get-Content next_deployment.yaml) -replace 'image:.*', "image: $env:IMAGE_TAG" | Set-Content next_deployment.yaml
+          cd C:\Users\stden\OneDrive\Desktop\prototype\Kubernetes\tmr-k8s\AKS\helm\nextjs-app
+          Write-Host "Changed directory to helm\nextjs-app"
+          (Get-Content values.yaml) -replace 'tag:.*', "tag: ${{ github.sha }}" | Set-Content values.yaml
         shell: powershell
     
       - name: Commit and push updated next_deployment.yaml to tmr-k8s
@@ -37,15 +40,18 @@ jobs:
           cd C:\Users\stden\OneDrive\Desktop\prototype\Kubernetes\tmr-k8s
           git config user.name "GitHub Actions"
           git config user.email "actions@github.com"
-          git add next_deployment.yaml
+          git add .
           git commit -m "Update image tag to ${{ github.sha }}"
           git push https://${{ secrets.GH_TOKEN }}@github.com/xalien073/tmr-k8s.git main
 
       - name: Apply the new deployment to Minikube
         run: |
           cd C:\Users\stden\OneDrive\Desktop\prototype\Kubernetes\tmr-k8s
-          kubectl apply -f next_deployment.yaml
-          kubectl apply -f next_service.yaml
+          if (-not (kubectl get namespace tmr)) {
+            kubectl create namespace tmr
+          }
+          helm install next-app ./nextjs-app --namespace tmr
+        shell: powershell
 
       # - name: Apply the new deployment to Azure Kubernetes Cluster
       #   run: |
