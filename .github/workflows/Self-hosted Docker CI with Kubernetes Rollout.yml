@@ -46,7 +46,7 @@ jobs:
 
       - name: Apply the new deployment to Minikube
         run: |
-          cd C:\Users\stden\OneDrive\Desktop\prototype\Kubernetes\tmr-k8s
+          cd C:\Users\stden\OneDrive\Desktop\prototype\Kubernetes\tmr-k8s\AKS\helm
           if (-not (kubectl get namespace tmr)) {
             kubectl create namespace tmr
           }
