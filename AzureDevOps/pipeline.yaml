@@ -88,7 +88,9 @@ stages:
               git config user.name "xalien073"
               git add k8s/AKS/helm/nextjs-app/values.yaml
               git commit -m "🚀 Update deployment image to version $(Build.BuildId)"
-              git push origin HEAD:main
+              git push https://$(GITHUB_TOKEN)@github.com/$(GIT_USER_NAME)/$(GIT_REPO_NAME) HEAD:main
+            env:
+              GITHUB_TOKEN: $(GITHUB_TOKEN)
             displayName: "Commit & Push Helm Chart Update"
 
 
