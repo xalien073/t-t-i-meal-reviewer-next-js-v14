@@ -66,7 +66,7 @@ stages:
         steps:
           - task: Docker@2
             inputs:
-              containerRegistry: "Docker Hub Service Connection" # Docker Hub service connection
+              containerRegistry: "Docker Hub Service Connection" # Docker Hub service connection name
               repository: "xalien073/tmr"
               command: "push"
               tags: "$(Build.BuildId)"
@@ -77,18 +77,11 @@ stages:
     jobs:
       - job: UpdateValues
         steps:
-          - checkout: self # We DON'T re-clone; we already have this repo
+          # - checkout: self # We already have this repo — no need to re-clone
           - script: |
               echo "✏️ Updating image tag in values.yaml..."
               sed -i 's/tag:.*/tag: $(Build.BuildId)/' k8s/AKS/helm/nextjs-app/values.yaml
             displayName: "Update Image Tag"
-
-          - task: GitHubCheckout@0
-            inputs:
-              repository: "$(GIT_USER_NAME)/$(GIT_REPO_NAME)"
-              githubConnection: "github.com_xalien073" # GitHub service connection
-              ref: "main"
-            displayName: "Connect to GitHub (No Clone)"
 
           - script: |
               git config user.email "xalien073@gmail.com"
@@ -97,6 +90,7 @@ stages:
               git commit -m "🚀 Update deployment image to version $(Build.BuildId)"
               git push origin HEAD:main
             displayName: "Commit & Push Helm Chart Update"
+
 
 
 # trigger:
