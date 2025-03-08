@@ -1,0 +1,82 @@
+trigger:
+  branches:
+    include:
+      - main
+
+pool:
+  name: self-hosted-pool
+  demands:
+    - agent.name -equals JenkinsMaster
+
+
+variables:
+  DOCKER_IMAGE: "xalien073/tmr:$(Build.BuildId)"
+  SONAR_URL: "http://20.44.59.222:9000"
+  GIT_REPO_NAME: "xalien073/t-t-i-meal-reviewer-next-js-v14"
+  GIT_USER_NAME: "xalien073"
+
+stages:
+  - stage: Checkout
+    jobs:
+      - job: CheckoutCode
+        steps:
+          - checkout: self # Clones the current repo (IMPORTANT)
+          - script: echo "Checkout passed!"
+
+  - stage: StaticCodeAnalysis
+    jobs:
+      - job: SonarQubeAnalysis
+        steps:
+          - script: |
+              apk update
+              apk add openjdk11 curl unzip git
+              curl -o sonar-scanner.zip -L https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-4.7.0.2747-linux.zip
+              unzip sonar-scanner.zip -d /opt
+              ln -s /opt/sonar-scanner-4.7.0.2747-linux/bin/sonar-scanner /usr/bin/sonar-scanner
+              sed -i 's/use_embedded_jre=true/use_embedded_jre=false/' /opt/sonar-scanner-4.7.0.2747-linux/bin/sonar-scanner
+              sonar-scanner --version
+              sonar-scanner \
+              -Dsonar.projectKey=TMR \
+              -Dsonar.sources=. \
+              -Dsonar.host.url=$(SONAR_URL) \
+              -Dsonar.login=$(SONAR_AUTH_TOKEN)
+            env:
+              SONAR_AUTH_TOKEN: $(SONAR_AUTH_TOKEN)
+
+  - stage: BuildDockerImage
+    jobs:
+      - job: BuildImage
+        steps:
+          - script: |
+              docker --version
+              echo "Building Docker image for Next.js app!"
+              docker build -t $(DOCKER_IMAGE) .
+
+  - stage: PushToDockerHub
+    jobs:
+      - job: PushImage
+        steps:
+          - script: |
+              echo $(DOCKER_PASS) | docker login -u $(DOCKER_USER) --password-stdin
+              docker push $(DOCKER_IMAGE)
+            env:
+              DOCKER_USER: $(DOCKER_USER)
+              DOCKER_PASS: $(DOCKER_PASS)
+
+  - stage: UpdateHelmChart
+    jobs:
+      - job: UpdateValues
+        steps:
+          - script: |
+              [ -d target ] && rm -rf target
+              mkdir -p target && cd target
+              git clone https://$(GITHUB_TOKEN)@github.com/$(GIT_USER_NAME)/$(GIT_REPO_NAME).git .
+              git config user.email "xalien073@gmail.com"
+              git config user.name "xalien073"
+              sed -i 's/tag:.*/tag: $(Build.BuildId)/' k8s/AKS/helm/nextjs-app/values.yaml
+              git add k8s/AKS/helm/nextjs-app/values.yaml
+              git commit -m "Update deployment image to version $(Build.BuildId)"
+              git push https://$(GITHUB_TOKEN)@github.com/$(GIT_USER_NAME)/$(GIT_REPO_NAME) HEAD:main
+            env:
+              GITHUB_TOKEN: $(GITHUB_TOKEN)
+
