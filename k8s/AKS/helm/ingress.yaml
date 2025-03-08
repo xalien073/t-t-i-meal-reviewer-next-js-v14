@@ -1,0 +1,42 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  namespace: tmr
+  name: next-service-ingress  # Replace with the name for your ingress
+spec:
+  ingressClassName: azure-application-gateway  # Replace with your ingress class if different
+  rules:
+    - http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: next-app-next-service  # Replace with your service name (matches your service.yaml)
+                port:
+                  number: 80  # Port exposed by your service (matches your service.yaml)
+
+
+# apiVersion: networking.k8s.io/v1
+# kind: Ingress
+# metadata:
+#   name: next-service-ingress
+#   namespace: tmr  # Replace with your desired namespace
+#   annotations:
+#     kubernetes.io/ingress.class: "azure-application-gateway"
+# spec:
+#   rules:
+#     - host: "your-domain.com"  # Replace with your desired domain
+#       http:
+#         paths:
+#           - path: /
+#             pathType: Prefix
+#             backend:
+#               service:
+#                 name: next-service  # The name of your service (from the service.yaml)
+#                 port:
+#                   number: 80  # The port exposed by the service (from the service.yaml)
+#   # tls:
+#   #   - hosts:
+#   #       - "your-domain.com"  # Same domain as in the rules section
+#   #     secretName: "your-tls-secret"  # The name of the TLS secret for HTTPS termination (optional)

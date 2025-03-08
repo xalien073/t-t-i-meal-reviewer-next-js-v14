@@ -1,0 +1,9 @@
+apiVersion: v2
+name: next-app
+description: A Helm chart for deploying a Next.js app
+
+# Version of your chart
+version: 0.1.0
+
+# App version to distinguish between different releases
+appVersion: "1.0.0"

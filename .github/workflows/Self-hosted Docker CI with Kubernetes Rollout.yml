@@ -44,16 +44,22 @@ jobs:
           git commit -m "Update image tag to ${{ github.sha }}"
           git push https://${{ secrets.GH_TOKEN }}@github.com/xalien073/tmr-k8s.git main
 
-      - name: Apply the new deployment to Minikube
+      # - name: Apply the new deployment to Minikube
+      #   run: |
+      #     cd C:\Users\stden\OneDrive\Desktop\prototype\Kubernetes\tmr-k8s\AKS\helm
+      #     if (-not (kubectl get namespace tmr)) {
+      #       kubectl create namespace tmr
+      #     }
+      #     helm install next-app ./nextjs-app --namespace tmr
+      #   shell: powershell
+
+      - name: Apply the new deployment to Azure Kubernetes Cluster
         run: |
           cd C:\Users\stden\OneDrive\Desktop\prototype\Kubernetes\tmr-k8s\AKS\helm
+          az aks get-credentials --resource-group poona-student --name tmr-aks
           if (-not (kubectl get namespace tmr)) {
             kubectl create namespace tmr
           }
           helm install next-app ./nextjs-app --namespace tmr
+          kubectl apply -f ingress.yaml --namespace tmr
         shell: powershell
-
-      # - name: Apply the new deployment to Azure Kubernetes Cluster
-      #   run: |
-        #     az aks get-credentials --resource-group poona-student --name <CLUSTER_NAME>
-      #     
