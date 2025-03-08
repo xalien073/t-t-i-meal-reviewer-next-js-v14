@@ -2,7 +2,7 @@ replicaCount: 2
 
 image:
   repository: xalien073/tmr
-  tag: 73
+  tag: 74
   pullPolicy: IfNotPresent
 
 service:
