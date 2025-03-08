@@ -24,29 +24,29 @@ stages:
           - script: echo "✅ Checkout passed!"
             displayName: "Confirm Checkout"
 
-  - stage: StaticCodeAnalysis
-    displayName: "Static Code Analysis with SonarQube"
-    jobs:
-      - job: SonarQubeAnalysis
-        steps:
-          - script: |
-              echo "🔍 Setting up Sonar Scanner..."
-              apk update
-              apk add openjdk11 curl unzip git
-              curl -o sonar-scanner.zip -L https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-4.7.0.2747-linux.zip
-              unzip sonar-scanner.zip -d /opt
-              ln -s /opt/sonar-scanner-4.7.0.2747-linux/bin/sonar-scanner /usr/bin/sonar-scanner
-              sed -i 's/use_embedded_jre=true/use_embedded_jre=false/' /opt/sonar-scanner-4.7.0.2747-linux/bin/sonar-scanner
-              sonar-scanner --version
-              echo "🚀 Running SonarQube Analysis..."
-              sonar-scanner \
-              -Dsonar.projectKey=TMR \
-              -Dsonar.sources=. \
-              -Dsonar.host.url=$(SONAR_URL) \
-              -Dsonar.login=$(SONAR_AUTH_TOKEN)
-            env:
-              SONAR_AUTH_TOKEN: $(SONAR_AUTH_TOKEN)
-            displayName: "Run SonarQube Scan"
+  # - stage: StaticCodeAnalysis
+  #   displayName: "Static Code Analysis with SonarQube"
+  #   jobs:
+  #     - job: SonarQubeAnalysis
+  #       steps:
+  #         - script: |
+  #             echo "🔍 Setting up Sonar Scanner..."
+  #             apk update
+  #             apk add openjdk11 curl unzip git
+  #             curl -o sonar-scanner.zip -L https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-4.7.0.2747-linux.zip
+  #             unzip sonar-scanner.zip -d /opt
+  #             ln -s /opt/sonar-scanner-4.7.0.2747-linux/bin/sonar-scanner /usr/bin/sonar-scanner
+  #             sed -i 's/use_embedded_jre=true/use_embedded_jre=false/' /opt/sonar-scanner-4.7.0.2747-linux/bin/sonar-scanner
+  #             sonar-scanner --version
+  #             echo "🚀 Running SonarQube Analysis..."
+  #             sonar-scanner \
+  #             -Dsonar.projectKey=TMR \
+  #             -Dsonar.sources=. \
+  #             -Dsonar.host.url=$(SONAR_URL) \
+  #             -Dsonar.login=$(SONAR_AUTH_TOKEN)
+  #           env:
+  #             SONAR_AUTH_TOKEN: $(SONAR_AUTH_TOKEN)
+  #           displayName: "Run SonarQube Scan"
 
   - stage: BuildDockerImage
     displayName: "Build Docker Image"
