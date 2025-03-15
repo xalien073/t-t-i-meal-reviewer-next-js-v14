@@ -12,7 +12,7 @@ spec:
             pathType: Prefix
             backend:
               service:
-                name: next-app-next-service  # Replace with your service name (matches your service.yaml)
+                name: tmr-next-service  # Replace with your service name (matches your service.yaml)
                 port:
                   number: 80  # Port exposed by your service (matches your service.yaml)
 
