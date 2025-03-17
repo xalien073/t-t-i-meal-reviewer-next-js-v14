@@ -218,7 +218,7 @@ function HomePage() {
           <Container>
             <Row>
               <h1 className="text-center">
-                Meals served in T T I
+                Meals served in T T I of P B M A
               </h1>
             </Row>
             <Row>
