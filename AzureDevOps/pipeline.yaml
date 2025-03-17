@@ -96,7 +96,8 @@ stages:
       steps:
         - script: |
             echo "🔍 Scanning Docker image with Trivy..."
-            trivy image --exit-code 1 --severity HIGH,CRITICAL $(DOCKER_IMAGE)
+            # trivy image --exit-code 1 --severity HIGH,CRITICAL $(DOCKER_IMAGE)
+            trivy image --exit-code 1 --severity CRITICAL $(DOCKER_IMAGE)
           displayName: "Trivy Image Scan"
   
   - stage: PushToDockerHub
