@@ -90,8 +90,8 @@ stages:
             displayName: "Docker Build"
 
   - stage: ScanDockerImage
-  displayName: "Scan Docker Image for Vulnerabilities"
-  jobs:
+    displayName: "Scan Docker Image for Vulnerabilities"
+    jobs:
     - job: SecurityScan
       steps:
         - script: |
