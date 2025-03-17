@@ -28,8 +28,8 @@ stages:
             displayName: "Confirm Checkout"
 
   - stage: StaticCodeAnalysis
-  displayName: "Static Code Analysis with SonarQube"
-  jobs:
+    displayName: "Static Code Analysis with SonarQube"
+    jobs:
     - job: SonarQubeAnalysis
       steps:
         - script: |
