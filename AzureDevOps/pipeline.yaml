@@ -89,6 +89,16 @@ stages:
               docker build -t $(DOCKER_IMAGE) .
             displayName: "Docker Build"
 
+  - stage: ScanDockerImage
+  displayName: "Scan Docker Image for Vulnerabilities"
+  jobs:
+    - job: SecurityScan
+      steps:
+        - script: |
+            echo "🔍 Scanning Docker image with Trivy..."
+            trivy image --exit-code 1 --severity HIGH,CRITICAL $(DOCKER_IMAGE)
+          displayName: "Trivy Image Scan"
+  
   - stage: PushToDockerHub
     displayName: "Push Docker Image to Docker Hub"
     jobs:
