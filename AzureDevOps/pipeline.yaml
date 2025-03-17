@@ -28,22 +28,55 @@ stages:
             displayName: "Confirm Checkout"
 
   - stage: StaticCodeAnalysis
-    displayName: "Static Code Analysis with SonarQube"
-    jobs:
-      - job: SonarQubeAnalysis
-        steps:
-          - script: |
-              echo "🚀 Running SonarQube Analysis..."
-              sonar-scanner --version
-              echo "🚀 Running SonarQube Analysis..."
-              sonar-scanner \
-              -Dsonar.projectKey=TMR-Next \
-              -Dsonar.sources=. \
-              -Dsonar.host.url=$(SONAR_URL) \
-              -Dsonar.login=$(SONAR_AUTH_TOKEN)
-            env:
-              SONAR_AUTH_TOKEN: $(SONAR_AUTH_TOKEN)
-            displayName: "Run SonarQube Scan"
+  displayName: "Static Code Analysis with SonarQube"
+  jobs:
+    - job: SonarQubeAnalysis
+      steps:
+        - script: |
+            echo "🚀 Running SonarQube Analysis..."
+            sonar-scanner \
+            -Dsonar.projectKey=TMR-Next \
+            -Dsonar.sources=. \
+            -Dsonar.host.url=$(SONAR_URL) \
+            -Dsonar.login=$(SONAR_AUTH_TOKEN) \
+            -Dsonar.qualitygate.wait=true  # Wait for the result
+          env:
+            SONAR_AUTH_TOKEN: $(SONAR_AUTH_TOKEN)
+          displayName: "Run SonarQube Scan"
+
+        - script: |
+            echo "🔍 Checking SonarQube Quality Gate..."
+            SONAR_PROJECT_KEY="TMR-Next"
+            SONAR_API_URL="$(SONAR_URL)/api/qualitygates/project_status?projectKey=$SONAR_PROJECT_KEY"
+            STATUS=$(curl -s -u $(SONAR_AUTH_TOKEN): "$SONAR_API_URL" | jq -r .projectStatus.status)
+
+            if [ "$STATUS" != "OK" ]; then
+              echo "❌ Quality Gate Failed! Pipeline will stop."
+              exit 1
+            else
+              echo "✅ Quality Gate Passed!"
+            fi
+          env:
+            SONAR_AUTH_TOKEN: $(SONAR_AUTH_TOKEN)
+          displayName: "Verify SonarQube Quality Gate"
+
+  # - stage: StaticCodeAnalysis
+  #   displayName: "Static Code Analysis with SonarQube"
+  #   jobs:
+  #     - job: SonarQubeAnalysis
+  #       steps:
+  #         - script: |
+  #             echo "🚀 Running SonarQube Analysis..."
+  #             sonar-scanner --version
+  #             echo "🚀 Running SonarQube Analysis..."
+  #             sonar-scanner \
+  #             -Dsonar.projectKey=TMR-Next \
+  #             -Dsonar.sources=. \
+  #             -Dsonar.host.url=$(SONAR_URL) \
+  #             -Dsonar.login=$(SONAR_AUTH_TOKEN)
+  #           env:
+  #             SONAR_AUTH_TOKEN: $(SONAR_AUTH_TOKEN)
+  #           displayName: "Run SonarQube Scan"
 
   - stage: BuildDockerImage
     displayName: "Build Docker Image"
