@@ -7,7 +7,7 @@ trigger:
       - src/*
 
 pool:
-  name: self-hosted-pool
+  name: self-hosted-pool  # Runs on Azure VM (self-hosted agent)
   demands:
     - agent.name -equals JenkinsMaster
 
@@ -18,107 +18,52 @@ variables:
   GIT_USER_NAME: "xalien073"
 
 stages:
-  - stage: Checkout
-    displayName: "Checkout Code"
+  - stage: RunInsideDocker
+    displayName: "Run Entire Pipeline Inside Docker"
     jobs:
-      - job: CheckoutCode
+      - job: RunPipeline
+        container:
+          image: "docker:24.0.1-dind"  # Use a base image with Docker CLI
+          options: "--privileged -v /var/run/docker.sock:/var/run/docker.sock"  # Enable Docker inside Docker
         steps:
-          - checkout: self # Clones the current GitHub repo
-          - script: echo "✅ Checkout passed!"
-            displayName: "Confirm Checkout"
+          - checkout: self  # Clone repo inside the container
 
-  - stage: StaticCodeAnalysis
-    displayName: "Static Code Analysis with SonarQube"
-    jobs:
-    - job: SonarQubeAnalysis
-      steps:
-        - script: |
-            echo "🚀 Running SonarQube Analysis..."
-            sonar-scanner \
-            -Dsonar.projectKey=TMR-Next \
-            -Dsonar.sources=. \
-            -Dsonar.host.url=$(SONAR_URL) \
-            -Dsonar.login=$(SONAR_AUTH_TOKEN) \
-            -Dsonar.qualitygate.wait=true  # Wait for the result
-          env:
-            SONAR_AUTH_TOKEN: $(SONAR_AUTH_TOKEN)
-          displayName: "Run SonarQube Scan"
-
-        - script: |
-            echo "🔍 Checking SonarQube Quality Gate..."
-            SONAR_PROJECT_KEY="TMR-Next"
-            SONAR_API_URL="$(SONAR_URL)/api/qualitygates/project_status?projectKey=$SONAR_PROJECT_KEY"
-            STATUS=$(curl -s -u $(SONAR_AUTH_TOKEN): "$SONAR_API_URL" | jq -r .projectStatus.status)
-
-            if [ "$STATUS" != "OK" ]; then
-              echo "❌ Quality Gate Failed! Pipeline will stop."
-              exit 1
-            else
-              echo "✅ Quality Gate Passed!"
-            fi
-          env:
-            SONAR_AUTH_TOKEN: $(SONAR_AUTH_TOKEN)
-          displayName: "Verify SonarQube Quality Gate"
-
-  # - stage: StaticCodeAnalysis
-  #   displayName: "Static Code Analysis with SonarQube"
-  #   jobs:
-  #     - job: SonarQubeAnalysis
-  #       steps:
-  #         - script: |
-  #             echo "🚀 Running SonarQube Analysis..."
-  #             sonar-scanner --version
-  #             echo "🚀 Running SonarQube Analysis..."
-  #             sonar-scanner \
-  #             -Dsonar.projectKey=TMR-Next \
-  #             -Dsonar.sources=. \
-  #             -Dsonar.host.url=$(SONAR_URL) \
-  #             -Dsonar.login=$(SONAR_AUTH_TOKEN)
-  #           env:
-  #             SONAR_AUTH_TOKEN: $(SONAR_AUTH_TOKEN)
-  #           displayName: "Run SonarQube Scan"
-
-  - stage: BuildDockerImage
-    displayName: "Build Docker Image"
-    jobs:
-      - job: BuildImage
-        steps:
           - script: |
-              docker --version
+              echo "🐳 Running Pipeline Inside Docker Container"
+              echo "✅ Docker Version: $(docker --version)"
+
+          # Run SonarQube Analysis inside Docker
+          - script: |
+              echo "🚀 Running SonarQube Analysis..."
+              docker run --rm sonarsource/sonar-scanner-cli \
+                -Dsonar.projectKey=TMR-Next \
+                -Dsonar.sources=. \
+                -Dsonar.host.url=$(SONAR_URL) \
+                -Dsonar.login=$(SONAR_AUTH_TOKEN)
+            displayName: "Run SonarQube Scan"
+
+          # Build Docker Image inside Docker
+          - script: |
               echo "🐳 Building Docker image for Next.js app..."
               docker build -t $(DOCKER_IMAGE) .
             displayName: "Docker Build"
 
-  - stage: ScanDockerImage
-    displayName: "Scan Docker Image for Vulnerabilities"
-    jobs:
-    - job: SecurityScan
-      steps:
-        - script: |
-            echo "🔍 Scanning Docker image with Trivy..."
-            # trivy image --exit-code 1 --severity HIGH,CRITICAL $(DOCKER_IMAGE)
-            trivy image --exit-code 1 --severity CRITICAL $(DOCKER_IMAGE)
-          displayName: "Trivy Image Scan"
-  
-  - stage: PushToDockerHub
-    displayName: "Push Docker Image to Docker Hub"
-    jobs:
-      - job: PushImage
-        steps:
+          # Scan the Image with Trivy inside Docker
+          - script: |
+              echo "🔍 Scanning Docker image with Trivy..."
+              docker run --rm aquasec/trivy image --exit-code 1 --severity CRITICAL $(DOCKER_IMAGE)
+            displayName: "Trivy Image Scan"
+
+          # Push Image to Docker Hub
           - task: Docker@2
             inputs:
-              containerRegistry: "Docker Hub Service Connection" # Docker Hub service connection name
+              containerRegistry: "Docker Hub Service Connection"
               repository: "xalien073/tmr"
               command: "push"
               tags: "$(Build.BuildId)"
             displayName: "🚢 Push Docker Image"
 
-  - stage: UpdateHelmChart
-    displayName: "Update Helm Chart with New Image Tag"
-    jobs:
-      - job: UpdateValues
-        steps:
-          # - checkout: self # We already have this repo — no need to re-clone
+          # Update Helm Chart inside Docker
           - script: |
               echo "✏️ Updating image tag in values.yaml..."
               sed -i 's/tag:.*/tag: $(Build.BuildId)/' k8s/AKS/helm/nextjs-app/values.yaml
@@ -135,17 +80,18 @@ stages:
             displayName: "Commit & Push Helm Chart Update"
 
 
-
 # trigger:
 #   branches:
 #     include:
 #       - main
+#   paths:
+#     include:
+#       - src/*
 
 # pool:
 #   name: self-hosted-pool
 #   demands:
 #     - agent.name -equals JenkinsMaster
-
 
 # variables:
 #   DOCKER_IMAGE: "xalien073/tmr:$(Build.BuildId)"
@@ -155,66 +101,116 @@ stages:
 
 # stages:
 #   - stage: Checkout
+#     displayName: "Checkout Code"
 #     jobs:
 #       - job: CheckoutCode
 #         steps:
-#           - checkout: self # Clones the current repo (IMPORTANT)
-#           - script: echo "Checkout passed!"
+#           - checkout: self # Clones the current GitHub repo
+#           - script: echo "✅ Checkout passed!"
+#             displayName: "Confirm Checkout"
 
 #   - stage: StaticCodeAnalysis
+#     displayName: "Static Code Analysis with SonarQube"
 #     jobs:
-#       - job: SonarQubeAnalysis
-#         steps:
-#           - script: |
-#               apk update
-#               apk add openjdk11 curl unzip git
-#               curl -o sonar-scanner.zip -L https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-4.7.0.2747-linux.zip
-#               unzip sonar-scanner.zip -d /opt
-#               ln -s /opt/sonar-scanner-4.7.0.2747-linux/bin/sonar-scanner /usr/bin/sonar-scanner
-#               sed -i 's/use_embedded_jre=true/use_embedded_jre=false/' /opt/sonar-scanner-4.7.0.2747-linux/bin/sonar-scanner
-#               sonar-scanner --version
-#               sonar-scanner \
-#               -Dsonar.projectKey=TMR \
-#               -Dsonar.sources=. \
-#               -Dsonar.host.url=$(SONAR_URL) \
-#               -Dsonar.login=$(SONAR_AUTH_TOKEN)
-#             env:
-#               SONAR_AUTH_TOKEN: $(SONAR_AUTH_TOKEN)
+#     - job: SonarQubeAnalysis
+#       steps:
+#         - script: |
+#             echo "🚀 Running SonarQube Analysis..."
+#             sonar-scanner \
+#             -Dsonar.projectKey=TMR-Next \
+#             -Dsonar.sources=. \
+#             -Dsonar.host.url=$(SONAR_URL) \
+#             -Dsonar.login=$(SONAR_AUTH_TOKEN) \
+#             -Dsonar.qualitygate.wait=true  # Wait for the result
+#           env:
+#             SONAR_AUTH_TOKEN: $(SONAR_AUTH_TOKEN)
+#           displayName: "Run SonarQube Scan"
+
+#         - script: |
+#             echo "🔍 Checking SonarQube Quality Gate..."
+#             SONAR_PROJECT_KEY="TMR-Next"
+#             SONAR_API_URL="$(SONAR_URL)/api/qualitygates/project_status?projectKey=$SONAR_PROJECT_KEY"
+#             STATUS=$(curl -s -u $(SONAR_AUTH_TOKEN): "$SONAR_API_URL" | jq -r .projectStatus.status)
+
+#             if [ "$STATUS" != "OK" ]; then
+#               echo "❌ Quality Gate Failed! Pipeline will stop."
+#               exit 1
+#             else
+#               echo "✅ Quality Gate Passed!"
+#             fi
+#           env:
+#             SONAR_AUTH_TOKEN: $(SONAR_AUTH_TOKEN)
+#           displayName: "Verify SonarQube Quality Gate"
+
+#   # - stage: StaticCodeAnalysis
+#   #   displayName: "Static Code Analysis with SonarQube"
+#   #   jobs:
+#   #     - job: SonarQubeAnalysis
+#   #       steps:
+#   #         - script: |
+#   #             echo "🚀 Running SonarQube Analysis..."
+#   #             sonar-scanner --version
+#   #             echo "🚀 Running SonarQube Analysis..."
+#   #             sonar-scanner \
+#   #             -Dsonar.projectKey=TMR-Next \
+#   #             -Dsonar.sources=. \
+#   #             -Dsonar.host.url=$(SONAR_URL) \
+#   #             -Dsonar.login=$(SONAR_AUTH_TOKEN)
+#   #           env:
+#   #             SONAR_AUTH_TOKEN: $(SONAR_AUTH_TOKEN)
+#   #           displayName: "Run SonarQube Scan"
 
 #   - stage: BuildDockerImage
+#     displayName: "Build Docker Image"
 #     jobs:
 #       - job: BuildImage
 #         steps:
 #           - script: |
 #               docker --version
-#               echo "Building Docker image for Next.js app!"
+#               echo "🐳 Building Docker image for Next.js app..."
 #               docker build -t $(DOCKER_IMAGE) .
+#             displayName: "Docker Build"
 
+#   - stage: ScanDockerImage
+#     displayName: "Scan Docker Image for Vulnerabilities"
+#     jobs:
+#     - job: SecurityScan
+#       steps:
+#         - script: |
+#             echo "🔍 Scanning Docker image with Trivy..."
+#             # trivy image --exit-code 1 --severity HIGH,CRITICAL $(DOCKER_IMAGE)
+#             trivy image --exit-code 1 --severity CRITICAL $(DOCKER_IMAGE)
+#           displayName: "Trivy Image Scan"
+  
 #   - stage: PushToDockerHub
+#     displayName: "Push Docker Image to Docker Hub"
 #     jobs:
 #       - job: PushImage
 #         steps:
-#           - script: |
-#               echo $(DOCKER_PASS) | docker login -u $(DOCKER_USER) --password-stdin
-#               docker push $(DOCKER_IMAGE)
-#             env:
-#               DOCKER_USER: $(DOCKER_USER)
-#               DOCKER_PASS: $(DOCKER_PASS)
+#           - task: Docker@2
+#             inputs:
+#               containerRegistry: "Docker Hub Service Connection" # Docker Hub service connection name
+#               repository: "xalien073/tmr"
+#               command: "push"
+#               tags: "$(Build.BuildId)"
+#             displayName: "🚢 Push Docker Image"
 
 #   - stage: UpdateHelmChart
+#     displayName: "Update Helm Chart with New Image Tag"
 #     jobs:
 #       - job: UpdateValues
 #         steps:
 #           - script: |
-#               [ -d target ] && rm -rf target
-#               mkdir -p target && cd target
-#               git clone https://$(GITHUB_TOKEN)@github.com/$(GIT_USER_NAME)/$(GIT_REPO_NAME).git .
+#               echo "✏️ Updating image tag in values.yaml..."
+#               sed -i 's/tag:.*/tag: $(Build.BuildId)/' k8s/AKS/helm/nextjs-app/values.yaml
+#             displayName: "Update Image Tag"
+
+#           - script: |
 #               git config user.email "xalien073@gmail.com"
 #               git config user.name "xalien073"
-#               sed -i 's/tag:.*/tag: $(Build.BuildId)/' k8s/AKS/helm/nextjs-app/values.yaml
 #               git add k8s/AKS/helm/nextjs-app/values.yaml
-#               git commit -m "Update deployment image to version $(Build.BuildId)"
-#               git push https://$(GITHUB_TOKEN)@github.com/$(GIT_USER_NAME)/$(GIT_REPO_NAME) HEAD:main
+#               git commit -m "🚀 Update deployment image to version $(Build.BuildId)"
+#               git push https://$(GITHUB_TOKEN)@github.com/$(GIT_REPO_NAME) HEAD:main
 #             env:
 #               GITHUB_TOKEN: $(GITHUB_TOKEN)
-
+#             displayName: "Commit & Push Helm Chart Update"
