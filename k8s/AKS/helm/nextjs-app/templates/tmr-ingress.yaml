@@ -11,7 +11,7 @@ spec:
     - host: 20.44.59.222.nip.io
       http:
         paths:
-          - path: /tmr
+          - path: /tmr/credits
             pathType: Prefix
             backend:
               service:
@@ -20,7 +20,7 @@ spec:
                   number: 80
       http:
         paths:
-          - path: /tmr/credits
+          - path: /tmr
             pathType: Prefix
             backend:
               service:
