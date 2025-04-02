@@ -8,7 +8,7 @@ metadata:
 spec:
   ingressClassName: nginx  # Using Nginx
   rules:
-    - host: 20.44.59.222
+    - host: 20.44.59.222.nip.io
       http:
         paths:
           - path: /tmr
@@ -18,7 +18,6 @@ spec:
                 name: {{ .Release.Name }}-service
                 port:
                   number: 80
-
 
 # apiVersion: networking.k8s.io/v1
 # kind: Ingress
