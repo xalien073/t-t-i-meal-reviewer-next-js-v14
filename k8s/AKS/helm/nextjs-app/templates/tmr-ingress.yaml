@@ -4,27 +4,49 @@ metadata:
   namespace: default
   name: {{ .Release.Name }}-ingress
   annotations:
-    nginx.ingress.kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/rewrite-target: /$1
 spec:
   ingressClassName: nginx  # Using Nginx
   rules:
     - host: 20.44.59.222.nip.io
       http:
         paths:
-          - path: /tmr/credits
+          - path: /tmr(/|$)(.*)
             pathType: Prefix
             backend:
               service:
                 name: {{ .Release.Name }}-service
                 port:
                   number: 80
-      http:
-        paths:
-          - path: /tmr
-            pathType: Prefix
-            backend:
-              service:
-                name: {{ .Release.Name }}-service
-                port:
-                  number: 80
+
+
+# apiVersion: networking.k8s.io/v1
+# kind: Ingress
+# metadata:
+#   namespace: default
+#   name: {{ .Release.Name }}-ingress
+#   annotations:
+#     nginx.ingress.kubernetes.io/rewrite-target: /
+# spec:
+#   ingressClassName: nginx  # Using Nginx
+#   rules:
+#     - host: 20.44.59.222.nip.io
+#       http:
+#         paths:
+#           - path: /tmr/credits
+#             pathType: Prefix
+#             backend:
+#               service:
+#                 name: {{ .Release.Name }}-service
+#                 port:
+#                   number: 80
+#       http:
+#         paths:
+#           - path: /tmr
+#             pathType: Prefix
+#             backend:
+#               service:
+#                 name: {{ .Release.Name }}-service
+#                 port:
+#                   number: 80
 
