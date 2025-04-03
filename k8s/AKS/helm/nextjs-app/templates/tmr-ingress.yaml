@@ -4,15 +4,16 @@ metadata:
   namespace: default
   name: {{ .Release.Name }}-ingress
   annotations:
-    nginx.ingress.kubernetes.io/rewrite-target: /$2
-    nginx.ingress.kubernetes.io/use-regex: "true"
+    # nginx.ingress.kubernetes.io/rewrite-target: /$2
+    # nginx.ingress.kubernetes.io/use-regex: "true"
 spec:
   ingressClassName: nginx  # Using Nginx
   rules:
-    - host: 20.44.59.222.nip.io
+    - host: t-t-i-meal-reviewer.20.44.59.222.nip.io
       http:
         paths:
-          - path: /tmr(/|$)(.*)
+          # - path: /tmr(/|$)(.*)
+          - path: /
             pathType: Prefix
             backend:
               service:
