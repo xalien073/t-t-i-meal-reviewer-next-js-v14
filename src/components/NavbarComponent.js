@@ -12,15 +12,15 @@ function NavbarComponent({ loggedIn, user, onLoginClick, onSignupClick, handleLo
       <a href="#main" className={styles.skipToContent}>
         Skip to Main Content
       </a>
-      <Link href="/">
+      <Link href="/tmr">
       <Navbar.Brand className="text-white">
         TTI Meal Reviewer
         </Navbar.Brand>
     </Link>
-    <Link className="text-white px-3" href="/role-of-azure">
+    <Link className="text-white px-3" href="/tmr/role-of-azure">
               Role of Azure <FontAwesomeIcon icon={faQuestion} />
           </Link>
-    <Link className="text-white px-3" href="/credits">
+    <Link className="text-white px-3" href="/tmr/credits">
               Credits <FontAwesomeIcon icon={faHandshakeAngle} />
           </Link>
         <Nav className="ms-auto d-flex">
