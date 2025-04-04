@@ -210,6 +210,9 @@ function HomePage() {
         handleLogout={handleLogout}
       />
       <main id='main' style={{ minHeight: '100vh' }}>
+        <h1>
+          Testing ingress behavior!
+        </h1>
         {isLoading ? (
           <p className='text-center'>Loading meals...</p>
         ) : error ? (
